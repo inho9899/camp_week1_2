@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '/screens/tab1_screen.dart';
+import 'screens/tab1_screen.dart';
 import 'screens/tab2_screen.dart';
 import 'screens/tab3_screen.dart';
 
