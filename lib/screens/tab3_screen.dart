@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import '../main.dart';
+import 'calendar_screen.dart';
 
 class Tab3Screen extends StatefulWidget {
   const Tab3Screen({super.key});
@@ -100,7 +101,7 @@ class _Tab3ScreenState extends State<Tab3Screen> {
 
   int _calculateDaysRemaining(DateTime selectedDate) {
     final now = DateTime.now();
-    return selectedDate.difference(now).inDays + 1;
+    return selectedDate.difference(DateTime(now.year, now.month, now.day)).inDays;
   }
 
   Future<void> _deleteDday(int index) async {
@@ -133,13 +134,13 @@ class _Tab3ScreenState extends State<Tab3Screen> {
     );
 
     if (confirmDelete == true) {
-      // Schedule cancellation is not implemented here but should be added to handle notification cancellation.
+      // 알림 취소 기능은 이곳에 추가해야 합니다.
     }
   }
 
   Future<void> _scheduleNotification(Dday dday) async {
-    await _scheduleSpecificNotification(dday, Duration(days: 3), "D-${dday.description} 마감일 3일 전입니다!");
-    await _scheduleSpecificNotification(dday, Duration(days: 1), "D-${dday.description} 마감일 하루 전입니다!");
+    await _scheduleSpecificNotification(dday, Duration(days: 3), "${dday.description} 마감일 3일 전입니다!");
+    await _scheduleSpecificNotification(dday, Duration(days: 1), "${dday.description} 마감일 하루 전입니다!");
   }
 
   Future<void> _scheduleSpecificNotification(Dday dday, Duration duration, String message) async {
@@ -153,8 +154,8 @@ class _Tab3ScreenState extends State<Tab3Screen> {
 
     const AndroidNotificationDetails androidPlatformChannelSpecifics = AndroidNotificationDetails(
       'high_importance_channel', // 알림 채널 ID
-      'High Importance Notifications',
-      channelDescription: 'This channel is used for important notifications.',
+      '중요한 알림',
+      channelDescription: '중요한 알림을 위한 채널입니다.',
       importance: Importance.max,
       priority: Priority.high,
       ticker: 'ticker',
@@ -172,10 +173,10 @@ class _Tab3ScreenState extends State<Tab3Screen> {
 
   Future<void> _checkAndShowImmediateNotification(Dday dday) async {
     final now = DateTime.now();
-    final daysRemaining = dday.date.difference(now).inDays;
-    if (daysRemaining == 2) {
+    final daysRemaining = dday.date.difference(DateTime(now.year, now.month, now.day)).inDays;
+    if (daysRemaining == 3) {
       await _showNotification("${dday.description} 마감 3일 전입니다!");
-    } else if (daysRemaining == 0) {
+    } else if (daysRemaining == 1) {
       await _showNotification("${dday.description} 마감 하루 전입니다! 서둘러 과제를 완료하세요!");
     }
   }
@@ -183,8 +184,8 @@ class _Tab3ScreenState extends State<Tab3Screen> {
   Future<void> _showNotification(String message) async {
     const AndroidNotificationDetails androidPlatformChannelSpecifics = AndroidNotificationDetails(
       'high_importance_channel', // 알림 채널 ID
-      'High Importance Notifications',
-      channelDescription: 'This channel is used for important notifications.',
+      '중요한 알림',
+      channelDescription: '중요한 알림을 위한 채널입니다.',
       importance: Importance.max,
       priority: Priority.high,
       ticker: 'ticker',
@@ -210,18 +211,38 @@ class _Tab3ScreenState extends State<Tab3Screen> {
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
               child: Row(
                 children: [
-                  Icon(
-                    Icons.event_note,
-                    color: Color(0xFF212A3E),
-                    size: 24.0,
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => CalendarScreen(ddayList: _ddayList),
+                        ),
+                      );
+                    },
+                    child: Icon(
+                      Icons.event_note,
+                      color: Color(0xFF212A3E),
+                      size: 24.0,
+                    ),
                   ),
                   SizedBox(width: 8.0),
-                  Text(
-                    '과제 목록',
-                    style: TextStyle(
-                      fontSize: 24.0,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF212A3E),
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => CalendarScreen(ddayList: _ddayList),
+                        ),
+                      );
+                    },
+                    child: Text(
+                      '과제 캘린더',
+                      style: TextStyle(
+                        fontSize: 24.0,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF212A3E),
+                      ),
                     ),
                   ),
                 ],
