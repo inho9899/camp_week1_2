@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import '../main.dart';
 
 class Tab3Screen extends StatefulWidget {
   const Tab3Screen({super.key});
@@ -49,11 +51,14 @@ class _Tab3ScreenState extends State<Tab3Screen> {
               TextButton(
                 onPressed: () {
                   setState(() {
-                    _ddayList.add(Dday(
+                    Dday newDday = Dday(
                       date: pickedDate,
                       description: _textController.text,
-                    ));
+                    );
+                    _ddayList.add(newDday);
+                    _scheduleNotification(newDday);
                     _saveDdays();
+                    _checkAndShowImmediateNotification(newDday); // 추가된 코드
                   });
                   Navigator.of(context).pop();
                 },
@@ -114,6 +119,10 @@ class _Tab3ScreenState extends State<Tab3Screen> {
             ),
             TextButton(
               onPressed: () {
+                setState(() {
+                  _ddayList.removeAt(index);
+                  _saveDdays();
+                });
                 Navigator.of(context).pop(true);
               },
               child: const Text('예'),
@@ -124,11 +133,69 @@ class _Tab3ScreenState extends State<Tab3Screen> {
     );
 
     if (confirmDelete == true) {
-      setState(() {
-        _ddayList.removeAt(index);
-        _saveDdays();
-      });
+      // Schedule cancellation is not implemented here but should be added to handle notification cancellation.
     }
+  }
+
+  Future<void> _scheduleNotification(Dday dday) async {
+    await _scheduleSpecificNotification(dday, Duration(days: 3), "D-${dday.description} 마감일 3일 전입니다!");
+    await _scheduleSpecificNotification(dday, Duration(days: 1), "D-${dday.description} 마감일 하루 전입니다!");
+  }
+
+  Future<void> _scheduleSpecificNotification(Dday dday, Duration duration, String message) async {
+    DateTime scheduledNotificationDateTime = dday.date.subtract(duration);
+    scheduledNotificationDateTime = DateTime(
+      scheduledNotificationDateTime.year,
+      scheduledNotificationDateTime.month,
+      scheduledNotificationDateTime.day,
+      9, // 알림을 보낼 시간 설정 (오전 9시로 설정)
+    );
+
+    const AndroidNotificationDetails androidPlatformChannelSpecifics = AndroidNotificationDetails(
+      'high_importance_channel', // 알림 채널 ID
+      'High Importance Notifications',
+      channelDescription: 'This channel is used for important notifications.',
+      importance: Importance.max,
+      priority: Priority.high,
+      ticker: 'ticker',
+    );
+    const NotificationDetails platformChannelSpecifics = NotificationDetails(android: androidPlatformChannelSpecifics);
+    await flutterLocalNotificationsPlugin.schedule(
+      0,
+      '과제 알리미',
+      message,
+      scheduledNotificationDateTime,
+      platformChannelSpecifics,
+    );
+    print('Scheduled notification: $message at $scheduledNotificationDateTime');
+  }
+
+  Future<void> _checkAndShowImmediateNotification(Dday dday) async {
+    final now = DateTime.now();
+    final daysRemaining = dday.date.difference(now).inDays;
+    if (daysRemaining == 2) {
+      await _showNotification("${dday.description} 마감 3일 전입니다!");
+    } else if (daysRemaining == 0) {
+      await _showNotification("${dday.description} 마감 하루 전입니다! 서둘러 과제를 완료하세요!");
+    }
+  }
+
+  Future<void> _showNotification(String message) async {
+    const AndroidNotificationDetails androidPlatformChannelSpecifics = AndroidNotificationDetails(
+      'high_importance_channel', // 알림 채널 ID
+      'High Importance Notifications',
+      channelDescription: 'This channel is used for important notifications.',
+      importance: Importance.max,
+      priority: Priority.high,
+      ticker: 'ticker',
+    );
+    const NotificationDetails platformChannelSpecifics = NotificationDetails(android: androidPlatformChannelSpecifics);
+    await flutterLocalNotificationsPlugin.show(
+      0,
+      '과제 알리미',
+      message,
+      platformChannelSpecifics,
+    );
   }
 
   @override
@@ -138,7 +205,6 @@ class _Tab3ScreenState extends State<Tab3Screen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Add space and title here
             SizedBox(height: 16.0),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -151,7 +217,7 @@ class _Tab3ScreenState extends State<Tab3Screen> {
                   ),
                   SizedBox(width: 8.0),
                   Text(
-                    'D-Day 리스트',
+                    '과제 목록',
                     style: TextStyle(
                       fontSize: 24.0,
                       fontWeight: FontWeight.bold,
@@ -173,7 +239,8 @@ class _Tab3ScreenState extends State<Tab3Screen> {
                       margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
                       padding: const EdgeInsets.all(16.0),
                       decoration: BoxDecoration(
-                        color: Color(0xFF394867).withOpacity(0.2),
+                        color: Colors.white, // 흰색 배경
+                        border: Border.all(color: Colors.black, width: 1.0), // 검정색 테두리
                         borderRadius: BorderRadius.circular(20.0),
                       ),
                       child: Column(
