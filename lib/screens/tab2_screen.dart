@@ -24,8 +24,18 @@ class _Tab2ScreenState extends State<Tab2Screen> with AutomaticKeepAliveClientMi
     _loadImages();
   }
 
-  Future<void> _pickImage() async {
-    final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+  Future<void> _loadImages() async {
+    final prefs = await SharedPreferences.getInstance();
+    final List<String>? paths = prefs.getStringList('images');
+    if (paths != null) {
+      setState(() {
+        _images = paths.map((path) => File(path)).toList();
+      });
+    }
+  }
+
+  Future<void> _pickImage(ImageSource source) async {
+    final XFile? image = await _picker.pickImage(source: source);
     if (image != null) {
       final directory = await getApplicationDocumentsDirectory();
       final String path = directory.path;
@@ -35,6 +45,12 @@ class _Tab2ScreenState extends State<Tab2Screen> with AutomaticKeepAliveClientMi
       });
       _saveImages();
     }
+  }
+
+  Future<void> _saveImages() async {
+    final prefs = await SharedPreferences.getInstance();
+    final List<String> paths = _images.map((image) => image.path).toList();
+    prefs.setStringList('images', paths);
   }
 
   Future<void> _deleteImage(int index) async {
@@ -57,8 +73,8 @@ class _Tab2ScreenState extends State<Tab2Screen> with AutomaticKeepAliveClientMi
                   _images[index].delete();
                   _images.removeAt(index);
                 });
-                Navigator.of(context).pop();
                 _saveImages();
+                Navigator.of(context).pop();
               },
               child: const Text('예'),
             ),
@@ -68,38 +84,48 @@ class _Tab2ScreenState extends State<Tab2Screen> with AutomaticKeepAliveClientMi
     );
   }
 
-  Future<void> _showImage(BuildContext context, File image) async {
+  void _showImageViewer(BuildContext context, int initialIndex) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ImageViewer(
+          images: _images,
+          initialIndex: initialIndex,
+        ),
+      ),
+    );
+  }
+
+  void _showPickOptionsDialog(BuildContext context) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        return Dialog(
-          child: GestureDetector(
-            onTap: () {
-              Navigator.of(context).pop();
-            },
-            child: InteractiveViewer(
-              child: Image.file(image),
-            ),
+        return AlertDialog(
+          title: const Text('이미지 선택'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              ListTile(
+                leading: const Icon(Icons.photo_library),
+                title: const Text('갤러리에서 선택'),
+                onTap: () {
+                  Navigator.of(context).pop();
+                  _pickImage(ImageSource.gallery);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.camera_alt),
+                title: const Text('카메라로 찍기'),
+                onTap: () {
+                  Navigator.of(context).pop();
+                  _pickImage(ImageSource.camera);
+                },
+              ),
+            ],
           ),
         );
       },
     );
-  }
-
-  Future<void> _saveImages() async {
-    final SharedPreferences prefs = await SharedPreferences.getInstance();
-    List<String> paths = _images.map((file) => file.path).toList();
-    await prefs.setStringList('images', paths);
-  }
-
-  Future<void> _loadImages() async {
-    final SharedPreferences prefs = await SharedPreferences.getInstance();
-    List<String>? paths = prefs.getStringList('images');
-    if (paths != null) {
-      setState(() {
-        _images = paths.map((path) => File(path)).toList();
-      });
-    }
   }
 
   @override
@@ -112,13 +138,13 @@ class _Tab2ScreenState extends State<Tab2Screen> with AutomaticKeepAliveClientMi
             child: GridView.builder(
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 3,
-                childAspectRatio: 1.0,  // 1:1 비율
+                childAspectRatio: 1.0, // 1:1 비율
               ),
               itemCount: _images.length,
               itemBuilder: (context, index) {
                 return GestureDetector(
                   onTap: () {
-                    _showImage(context, _images[index]);
+                    _showImageViewer(context, index);
                   },
                   onLongPress: () {
                     _deleteImage(index);
@@ -137,11 +163,41 @@ class _Tab2ScreenState extends State<Tab2Screen> with AutomaticKeepAliveClientMi
         ],
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: _pickImage,
+        onPressed: () => _showPickOptionsDialog(context),
         child: const Icon(Icons.add),
-        tooltip: '이미지 추가',
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+    );
+  }
+}
+
+class ImageViewer extends StatelessWidget {
+  final List<File> images;
+  final int initialIndex;
+
+  const ImageViewer({Key? key, required this.images, required this.initialIndex}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: PageView.builder(
+        controller: PageController(initialPage: initialIndex),
+        itemCount: images.length,
+        itemBuilder: (context, index) {
+          return InteractiveViewer(
+            panEnabled: true, // 확대 및 축소 시 패닝 가능
+            scaleEnabled: true, // 확대 및 축소 가능
+            minScale: 1.0,
+            maxScale: 4.0,
+            child: Image.file(
+              images[index],
+              fit: BoxFit.contain,
+              width: double.infinity,
+              height: double.infinity,
+            ),
+          );
+        },
+      ),
     );
   }
 }
