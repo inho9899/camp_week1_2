@@ -135,29 +135,31 @@ class _Tab2ScreenState extends State<Tab2Screen> with AutomaticKeepAliveClientMi
       body: Column(
         children: [
           Expanded(
-            child: GridView.builder(
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 3,
-                childAspectRatio: 1.0, // 1:1 비율
-              ),
-              itemCount: _images.length,
-              itemBuilder: (context, index) {
-                return GestureDetector(
-                  onTap: () {
-                    _showImageViewer(context, index);
-                  },
-                  onLongPress: () {
-                    _deleteImage(index);
-                  },
-                  child: Padding(
-                    padding: const EdgeInsets.all(4.0),
-                    child: Image.file(
-                      _images[index],
-                      fit: BoxFit.cover,
+            child: Scrollbar(
+              child: GridView.builder(
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 3,
+                  childAspectRatio: 1.0, // 1:1 비율
+                ),
+                itemCount: _images.length,
+                itemBuilder: (context, index) {
+                  return GestureDetector(
+                    onTap: () {
+                      _showImageViewer(context, index);
+                    },
+                    onLongPress: () {
+                      _deleteImage(index);
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.all(4.0),
+                      child: Image.file(
+                        _images[index],
+                        fit: BoxFit.cover,
+                      ),
                     ),
-                  ),
-                );
-              },
+                  );
+                },
+              ),
             ),
           ),
         ],

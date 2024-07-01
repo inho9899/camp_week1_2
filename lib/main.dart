@@ -41,8 +41,8 @@ Future<void> main() async {
   runApp(const MyApp());
 }
 
-Future<void> requestNotificationPermission() async{
-  if(await Permission.notification.isDenied){
+Future<void> requestNotificationPermission() async {
+  if (await Permission.notification.isDenied) {
     await Permission.notification.request();
   }
 }
@@ -69,42 +69,81 @@ class MyHomePage extends StatefulWidget {
   _MyHomePageState createState() => _MyHomePageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateMixin {
-  late TabController _tabController;
+class _MyHomePageState extends State<MyHomePage> {
+  int _selectedIndex = 0;
+  final PageController _pageController = PageController();
 
-  @override
-  void initState() {
-    super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+  final List<Widget> _screens = [
+    const Tab1Screen(),
+    const Tab2Screen(),
+    const Tab3Screen(),
+  ];
+
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+    _pageController.jumpToPage(index);
+  }
+
+  void _onPageChanged(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
   }
 
   @override
   void dispose() {
-    _tabController.dispose();
+    _pageController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.grey.shade200, // 전체 배경색 설정
       appBar: AppBar(
-        title: const Text('Tabs Example'),
-        bottom: TabBar(
-          controller: _tabController,
-          tabs: const [
-            Tab(text: 'Tab 1'),
-            Tab(text: 'Tab 2'),
-            Tab(text: 'Tab 3'),
+        title: Row(
+          children: [
+            Image.asset(
+              'assets/madcamp_logo.png', // 이미지 경로 설정
+              height: 40, // 이미지 높이 설정
+            ),
+            const SizedBox(width: 10),
+            const Text('Tab Master'),
           ],
         ),
+        backgroundColor: Colors.blue, // AppBar 배경색 설정
       ),
-      body: TabBarView(
-        controller: _tabController,
-        children: const [
-          Tab1Screen(),
-          Tab2Screen(),
-          Tab3Screen(),
-        ],
+      body: Container(
+        color: Colors.grey.shade200, // 페이지뷰 배경색 설정
+        child: PageView(
+          controller: _pageController,
+          onPageChanged: _onPageChanged,
+          children: _screens,
+        ),
+      ),
+      bottomNavigationBar: Container(
+        color: Colors.white, // bottomNavigationBar 배경색 설정
+        child: BottomNavigationBar(
+          items: const <BottomNavigationBarItem>[
+            BottomNavigationBarItem(
+              icon: Icon(Icons.contact_page),
+              label: 'Contacts',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.add_a_photo),
+              label: 'Photos',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.access_alarm_rounded),
+              label: 'Scheduler',
+            ),
+          ],
+          currentIndex: _selectedIndex,
+          selectedItemColor: Colors.blue,
+          onTap: _onItemTapped,
+        ),
       ),
     );
   }

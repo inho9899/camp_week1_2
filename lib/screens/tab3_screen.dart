@@ -250,43 +250,45 @@ class _Tab3ScreenState extends State<Tab3Screen> {
             ),
             SizedBox(height: 16.0),
             Expanded(
-              child: ListView.builder(
-                itemCount: _ddayList.length,
-                itemBuilder: (context, index) {
-                  Dday dday = _ddayList[index];
-                  return GestureDetector(
-                    onLongPress: () => _deleteDday(index),
-                    child: Container(
-                      margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
-                      padding: const EdgeInsets.all(16.0),
-                      decoration: BoxDecoration(
-                        color: Colors.white, // 흰색 배경
-                        border: Border.all(color: Colors.black, width: 1.0), // 검정색 테두리
-                        borderRadius: BorderRadius.circular(20.0),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Icon(Icons.calendar_today, color: Colors.black, size: 24.0),
-                              SizedBox(width: 8.0),
-                              Text(
-                                'D-${_calculateDaysRemaining(dday.date)}: ${_formatDate(dday.date)}',
-                                style: TextStyle(
-                                  fontSize: 18.0,
-                                  fontWeight: FontWeight.bold,
+              child: Scrollbar(
+                child: ListView.builder(
+                  itemCount: _ddayList.length,
+                  itemBuilder: (context, index) {
+                    Dday dday = _ddayList[index];
+                    return GestureDetector(
+                      onLongPress: () => _deleteDday(index),
+                      child: Container(
+                        margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+                        padding: const EdgeInsets.all(16.0),
+                        decoration: BoxDecoration(
+                          color: Colors.white, // 흰색 배경
+                          border: Border.all(color: Colors.black, width: 1.0), // 검정색 테두리
+                          borderRadius: BorderRadius.circular(20.0),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Icon(Icons.calendar_today, color: Colors.black, size: 24.0),
+                                SizedBox(width: 8.0),
+                                Text(
+                                  'D-${_calculateDaysRemaining(dday.date)}: ${_formatDate(dday.date)}',
+                                  style: TextStyle(
+                                    fontSize: 18.0,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
-                              ),
-                            ],
-                          ),
-                          SizedBox(height: 8.0),
-                          Text(dday.description),
-                        ],
+                              ],
+                            ),
+                            SizedBox(height: 8.0),
+                            Text(dday.description),
+                          ],
+                        ),
                       ),
-                    ),
-                  );
-                },
+                    );
+                  },
+                ),
               ),
             ),
           ],

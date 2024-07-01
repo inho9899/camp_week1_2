@@ -14,6 +14,7 @@ class _Tab1ScreenState extends State<Tab1Screen> {
   List<Contact> _contacts = [];
   List<Contact> _filteredContacts = [];
   final TextEditingController _searchController = TextEditingController();
+  bool _isSearching = false;
 
   @override
   void initState() {
@@ -54,63 +55,110 @@ class _Tab1ScreenState extends State<Tab1Screen> {
     });
   }
 
+  void _startSearch() {
+    setState(() {
+      _isSearching = true;
+    });
+  }
+
+  void _stopSearch() {
+    setState(() {
+      _isSearching = false;
+      _searchController.clear();
+      _filteredContacts = _contacts;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.grey.shade200, // 전체 배경색 설정
       appBar: AppBar(
-        title: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            const Text('Contacts'),
-            Text('Total Contacts: ${_contacts.length}'),
-          ],
-        ),
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(kToolbarHeight),
-          child: Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: TextField(
-              controller: _searchController,
-              decoration: const InputDecoration(
-                hintText: 'Search Contacts...',
-                border: OutlineInputBorder(),
-                fillColor: Colors.white,
-                filled: true,
-              ),
-            ),
+        title: _isSearching
+            ? TextField(
+          controller: _searchController,
+          decoration: const InputDecoration(
+            hintText: 'Search Contacts...',
+            border: InputBorder.none,
           ),
-        ),
+          style: const TextStyle(color: Colors.white, fontSize: 18),
+        )
+            : const Text('Contacts'),
+        actions: _isSearching
+            ? [
+          IconButton(
+            icon: const Icon(Icons.clear),
+            onPressed: _stopSearch,
+          ),
+        ]
+            : [
+          IconButton(
+            icon: const Icon(Icons.search),
+            onPressed: _startSearch,
+          ),
+        ],
       ),
-      body: _buildContactList(),
+      body: Container(
+        color: Colors.grey.shade200, // 전체 배경색 설정
+        child: _buildBody(),
+      ),
     );
   }
 
-  Widget _buildContactList() {
-    if (_filteredContacts.isEmpty) {
-      return const Center(child: CircularProgressIndicator());
-    }
+  Widget _buildBody() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.all(10.0),
+          child: Text(
+            '연락처 (${_filteredContacts.length} Found)',
+            style: const TextStyle(fontSize: 12),
+          ),
+        ),
+        Expanded(
+          child: _buildListView(),
+        ),
+      ],
+    );
+  }
 
-    return ListView.builder(
-      itemCount: _filteredContacts.length,
-      itemBuilder: (context, index) {
-        final contact = _filteredContacts[index];
-        final phone = (contact.phones != null && contact.phones!.isNotEmpty)
-            ? contact.phones!.first.value
-            : 'No phone number';
-        return ListTile(
-          title: Text(contact.displayName ?? 'No Name'),
-          subtitle: Text(phone ?? 'No phone number'),
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => ContactDetailScreen(contact: contact),
+  Widget _buildListView() {
+    if (_filteredContacts.isEmpty) {
+      if (_searchController.text.isEmpty) {
+        return const Center(child: CircularProgressIndicator());
+      } else {
+        return const Center(child: Text('Not Found', style: TextStyle(fontSize: 24)));
+      }
+    } else {
+      return Scrollbar(
+        child: ListView.builder(
+          itemCount: _filteredContacts.length,
+          itemBuilder: (context, index) {
+            final contact = _filteredContacts[index];
+            final phone = (contact.phones != null && contact.phones!.isNotEmpty)
+                ? contact.phones!.first.value
+                : 'No phone number';
+            return Container(
+              color: index % 2 == 0 ? Colors.white : Colors.grey[300],
+              child: ListTile(
+                contentPadding: const EdgeInsets.symmetric(vertical: 5.0, horizontal: 16.0),
+                title: Text(contact.displayName ?? 'No Name'),
+                subtitle: Text(phone ?? 'No phone number'),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => ContactDetailScreen(contact: contact),
+                    ),
+                  );
+                },
               ),
             );
           },
-        );
-      },
-    );
+        ),
+      );
+    }
   }
 
   @override
