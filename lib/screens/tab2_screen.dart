@@ -276,6 +276,8 @@ class _Tab2ScreenState extends State<Tab2Screen> with AutomaticKeepAliveClientMi
               fit: BoxFit.cover,
               width: double.infinity,
               height: double.infinity,
+
+    
             ),
           ),
         );
