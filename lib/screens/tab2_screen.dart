@@ -3,6 +3,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:io';
+import 'dart:convert';
 
 class Tab2Screen extends StatefulWidget {
   const Tab2Screen({super.key});
@@ -13,7 +14,8 @@ class Tab2Screen extends StatefulWidget {
 
 class _Tab2ScreenState extends State<Tab2Screen> with AutomaticKeepAliveClientMixin {
   final ImagePicker _picker = ImagePicker();
-  List<File> _images = [];
+  List<ImageItem> _images = [];
+  List<ImageItem> _trashImages = [];
 
   @override
   bool get wantKeepAlive => true;
@@ -27,9 +29,15 @@ class _Tab2ScreenState extends State<Tab2Screen> with AutomaticKeepAliveClientMi
   Future<void> _loadImages() async {
     final prefs = await SharedPreferences.getInstance();
     final List<String>? paths = prefs.getStringList('images');
+    final List<String>? trashPaths = prefs.getStringList('trashImages');
     if (paths != null) {
       setState(() {
-        _images = paths.map((path) => File(path)).toList();
+        _images = paths.map((path) => ImageItem.fromJson(path)).toList();
+      });
+    }
+    if (trashPaths != null) {
+      setState(() {
+        _trashImages = trashPaths.map((path) => ImageItem.fromJson(path)).toList();
       });
     }
   }
@@ -41,7 +49,7 @@ class _Tab2ScreenState extends State<Tab2Screen> with AutomaticKeepAliveClientMi
       final String path = directory.path;
       final File newImage = await File(image.path).copy('$path/${DateTime.now().millisecondsSinceEpoch}.png');
       setState(() {
-        _images.add(newImage);
+        _images.add(ImageItem(file: newImage, isFavorite: false));
       });
       _saveImages();
     }
@@ -49,8 +57,10 @@ class _Tab2ScreenState extends State<Tab2Screen> with AutomaticKeepAliveClientMi
 
   Future<void> _saveImages() async {
     final prefs = await SharedPreferences.getInstance();
-    final List<String> paths = _images.map((image) => image.path).toList();
+    final List<String> paths = _images.map((image) => image.toJson()).toList();
+    final List<String> trashPaths = _trashImages.map((image) => image.toJson()).toList();
     prefs.setStringList('images', paths);
+    prefs.setStringList('trashImages', trashPaths);
   }
 
   Future<void> _deleteImage(int index) async {
@@ -59,7 +69,7 @@ class _Tab2ScreenState extends State<Tab2Screen> with AutomaticKeepAliveClientMi
       builder: (BuildContext context) {
         return AlertDialog(
           title: const Text('이미지 삭제'),
-          content: const Text('이 이미지를 삭제하시겠습니까?'),
+          content: const Text('이 이미지를 휴지통으로 이동하시겠습니까?'),
           actions: <Widget>[
             TextButton(
               onPressed: () {
@@ -70,7 +80,7 @@ class _Tab2ScreenState extends State<Tab2Screen> with AutomaticKeepAliveClientMi
             TextButton(
               onPressed: () {
                 setState(() {
-                  _images[index].delete();
+                  _trashImages.add(_images[index]);
                   _images.removeAt(index);
                 });
                 _saveImages();
@@ -84,12 +94,12 @@ class _Tab2ScreenState extends State<Tab2Screen> with AutomaticKeepAliveClientMi
     );
   }
 
-  void _showImageViewer(BuildContext context, int initialIndex) {
+  void _showImageViewer(BuildContext context, List<ImageItem> images, int initialIndex) {
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => ImageViewer(
-          images: _images,
+          images: images,
           initialIndex: initialIndex,
         ),
       ),
@@ -128,51 +138,169 @@ class _Tab2ScreenState extends State<Tab2Screen> with AutomaticKeepAliveClientMi
     );
   }
 
+  void _toggleFavorite(int index) {
+    setState(() {
+      _images[index].isFavorite = !_images[index].isFavorite;
+    });
+    _saveImages();
+  }
+
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    return Scaffold(
-      body: Column(
-        children: [
-          Expanded(
-            child: GridView.builder(
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 3,
-                childAspectRatio: 1.0, // 1:1 비율
+    return DefaultTabController(
+      length: 3,
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('갤러리'),
+          bottom: const TabBar(
+            tabs: [
+              Tab(text: '전체'),
+              Tab(text: '즐겨찾기'),
+              Tab(text: '휴지통'),
+            ],
+          ),
+        ),
+        body: TabBarView(
+          children: [
+            _buildGridView(_images),
+            _buildGridView(_images.where((image) => image.isFavorite).toList(), isFavoriteTab: true),
+            _buildTrashView(),
+          ],
+        ),
+        floatingActionButton: _buildFloatingActionButton(),
+        floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+      ),
+    );
+  }
+
+  Widget _buildGridView(List<ImageItem> images, {bool isFavoriteTab = false}) {
+    return GridView.builder(
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 3,
+        childAspectRatio: 1.0, // 1:1 비율
+      ),
+      itemCount: images.length,
+      itemBuilder: (context, index) {
+        return GestureDetector(
+          onTap: () {
+            _showImageViewer(context, images, index);
+          },
+          onLongPress: () {
+            if (!isFavoriteTab) {
+              _deleteImage(index);
+            }
+          },
+          child: Stack(
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(4.0),
+                child: Image.file(
+                  images[index].file,
+                  fit: BoxFit.cover,
+                  width: double.infinity,
+                  height: double.infinity,
+                ),
               ),
-              itemCount: _images.length,
-              itemBuilder: (context, index) {
-                return GestureDetector(
-                  onTap: () {
-                    _showImageViewer(context, index);
-                  },
-                  onLongPress: () {
-                    _deleteImage(index);
-                  },
-                  child: Padding(
-                    padding: const EdgeInsets.all(4.0),
-                    child: Image.file(
-                      _images[index],
-                      fit: BoxFit.cover,
+              if (!isFavoriteTab)
+                Positioned(
+                  top: 0,
+                  right: 0,
+                  child: IconButton(
+                    icon: Icon(
+                      images[index].isFavorite ? Icons.favorite : Icons.favorite_border,
+                      color: images[index].isFavorite ? Colors.red : Colors.white,
                     ),
+                    onPressed: () {
+                      _toggleFavorite(index);
+                    },
                   ),
+                ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildTrashView() {
+    return GridView.builder(
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 3,
+        childAspectRatio: 1.0, // 1:1 비율
+      ),
+      itemCount: _trashImages.length,
+      itemBuilder: (context, index) {
+        return GestureDetector(
+          onLongPress: () {
+            showDialog(
+              context: context,
+              builder: (BuildContext context) {
+                return AlertDialog(
+                  title: const Text('이미지 삭제'),
+                  content: const Text('이 이미지를 영구 삭제하시겠습니까?'),
+                  actions: <Widget>[
+                    TextButton(
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                      },
+                      child: const Text('아니요'),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        setState(() {
+                          _trashImages[index].file.delete();
+                          _trashImages.removeAt(index);
+                        });
+                        _saveImages();
+                        Navigator.of(context).pop();
+                      },
+                      child: const Text('예'),
+                    ),
+                  ],
                 );
               },
+            );
+          },
+          onTap: () {
+            setState(() {
+              _images.add(_trashImages[index]);
+              _trashImages.removeAt(index);
+            });
+            _saveImages();
+          },
+          child: Padding(
+            padding: const EdgeInsets.all(4.0),
+            child: Image.file(
+              _trashImages[index].file,
+              fit: BoxFit.cover,
+              width: double.infinity,
+              height: double.infinity,
             ),
           ),
-        ],
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _showPickOptionsDialog(context),
-        child: const Icon(Icons.add),
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+        );
+      },
+    );
+  }
+
+  Widget _buildFloatingActionButton() {
+    return Builder(
+      builder: (context) {
+        final TabController? tabController = DefaultTabController.of(context);
+        if (tabController != null && tabController.index == 0) {
+          return FloatingActionButton(
+            onPressed: () => _showPickOptionsDialog(context),
+            child: const Icon(Icons.add),
+          );
+        }
+        return SizedBox.shrink(); // 다른 탭에서는 빈 공간을 반환
+      },
     );
   }
 }
 
 class ImageViewer extends StatelessWidget {
-  final List<File> images;
+  final List<ImageItem> images;
   final int initialIndex;
 
   const ImageViewer({Key? key, required this.images, required this.initialIndex}) : super(key: key);
@@ -190,7 +318,7 @@ class ImageViewer extends StatelessWidget {
             minScale: 1.0,
             maxScale: 4.0,
             child: Image.file(
-              images[index],
+              images[index].file,
               fit: BoxFit.contain,
               width: double.infinity,
               height: double.infinity,
@@ -198,6 +326,25 @@ class ImageViewer extends StatelessWidget {
           );
         },
       ),
+    );
+  }
+}
+
+class ImageItem {
+  final File file;
+  bool isFavorite;
+
+  ImageItem({required this.file, required this.isFavorite});
+
+  String toJson() {
+    return '{"path":"${file.path}","isFavorite":$isFavorite}';
+  }
+
+  factory ImageItem.fromJson(String json) {
+    final Map<String, dynamic> data = jsonDecode(json);
+    return ImageItem(
+      file: File(data['path']),
+      isFavorite: data['isFavorite'],
     );
   }
 }
