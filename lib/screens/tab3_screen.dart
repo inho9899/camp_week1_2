@@ -162,7 +162,7 @@ class _Tab3ScreenState extends State<Tab3Screen> {
     );
     const NotificationDetails platformChannelSpecifics = NotificationDetails(android: androidPlatformChannelSpecifics);
     await flutterLocalNotificationsPlugin.schedule(
-      0,
+      UniqueKey().hashCode, // 고유한 ID를 사용하여 알림을 예약합니다.
       '과제 알리미',
       message,
       scheduledNotificationDateTime,
@@ -192,7 +192,7 @@ class _Tab3ScreenState extends State<Tab3Screen> {
     );
     const NotificationDetails platformChannelSpecifics = NotificationDetails(android: androidPlatformChannelSpecifics);
     await flutterLocalNotificationsPlugin.show(
-      0,
+      UniqueKey().hashCode, // 고유한 ID를 사용하여 알림을 예약합니다.
       '과제 알리미',
       message,
       platformChannelSpecifics,
