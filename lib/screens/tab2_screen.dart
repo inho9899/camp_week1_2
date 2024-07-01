@@ -287,13 +287,18 @@ class _Tab2ScreenState extends State<Tab2Screen> with AutomaticKeepAliveClientMi
     return Builder(
       builder: (context) {
         final TabController? tabController = DefaultTabController.of(context);
-        if (tabController != null && tabController.index == 0) {
-          return FloatingActionButton(
-            onPressed: () => _showPickOptionsDialog(context),
-            child: const Icon(Icons.add),
-          );
-        }
-        return SizedBox.shrink(); // 다른 탭에서는 빈 공간을 반환
+        return AnimatedBuilder(
+          animation: tabController!,
+          builder: (context, _) {
+            if (tabController.index == 0) {
+              return FloatingActionButton(
+                onPressed: () => _showPickOptionsDialog(context),
+                child: const Icon(Icons.add),
+              );
+            }
+            return SizedBox.shrink(); // 다른 탭에서는 빈 공간을 반환
+          },
+        );
       },
     );
   }
