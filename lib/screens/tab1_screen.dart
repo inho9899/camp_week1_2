@@ -73,53 +73,34 @@ class _Tab1ScreenState extends State<Tab1Screen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey.shade200, // 전체 배경색 설정
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Row(
-              children: [
-                Icon(
-                  Icons.contacts,
-                  color: Color(0xFF212A3E),
-                  size: 24.0,
-                ),
-                SizedBox(width: 8.0),
-                Expanded(
-                  child: Text(
-                    '연락처',
-                    style: TextStyle(
-                      fontSize: 24.0,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF212A3E),
-                    ),
-                  ),
-                ),
-                if (_isSearching)
-                  Expanded(
-                    child: TextField(
-                      controller: _searchController,
-                      decoration: const InputDecoration(
-                        hintText: 'Search Contacts...',
-                        border: InputBorder.none,
-                      ),
-                      style: const TextStyle(color: Colors.black, fontSize: 18),
-                    ),
-                  ),
-                IconButton(
-                  icon: Icon(_isSearching ? Icons.clear : Icons.search),
-                  onPressed: _isSearching ? _stopSearch : _startSearch,
-                ),
-              ],
-            ),
+      appBar: AppBar(
+        title: _isSearching
+            ? TextField(
+          controller: _searchController,
+          decoration: const InputDecoration(
+            hintText: 'Search Contacts...',
+            border: InputBorder.none,
           ),
-          Expanded(
-            child: Container(
-              color: Colors.grey.shade200, // 전체 배경색 설정
-              child: _buildBody(),
-            ),
+          style: const TextStyle(color: Colors.white, fontSize: 18),
+        )
+            : const Text('Contacts'),
+        actions: _isSearching
+            ? [
+          IconButton(
+            icon: const Icon(Icons.clear),
+            onPressed: _stopSearch,
+          ),
+        ]
+            : [
+          IconButton(
+            icon: const Icon(Icons.search),
+            onPressed: _startSearch,
           ),
         ],
+      ),
+      body: Container(
+        color: Colors.grey.shade200, // 전체 배경색 설정
+        child: _buildBody(),
       ),
     );
   }
@@ -158,20 +139,34 @@ class _Tab1ScreenState extends State<Tab1Screen> {
             final phone = (contact.phones != null && contact.phones!.isNotEmpty)
                 ? contact.phones!.first.value
                 : 'No phone number';
-            return Container(
-              color: index % 2 == 0 ? Colors.white : Colors.grey[300],
-              child: ListTile(
-                contentPadding: const EdgeInsets.symmetric(vertical: 5.0, horizontal: 16.0),
-                title: Text(contact.displayName ?? 'No Name'),
-                subtitle: Text(phone ?? 'No phone number'),
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => ContactDetailScreen(contact: contact),
+            return Padding(
+              padding: const EdgeInsets.symmetric(vertical: 5.0, horizontal: 16.0),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(15.0), // 둥근 모서리 설정
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.grey.withOpacity(0.5),
+                      spreadRadius: 2,
+                      blurRadius: 5,
+                      offset: Offset(0, 3), // 그림자 위치 조정
                     ),
-                  );
-                },
+                  ],
+                ),
+                child: ListTile(
+                  contentPadding: const EdgeInsets.symmetric(vertical: 5.0, horizontal: 16.0),
+                  title: Text(contact.displayName ?? 'No Name'),
+                  subtitle: Text(phone ?? 'No phone number'),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => ContactDetailScreen(contact: contact),
+                      ),
+                    );
+                  },
+                ),
               ),
             );
           },
