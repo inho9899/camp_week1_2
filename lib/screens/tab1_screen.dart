@@ -74,16 +74,37 @@ class _Tab1ScreenState extends State<Tab1Screen> {
     return Scaffold(
       backgroundColor: Colors.grey.shade200, // 전체 배경색 설정
       appBar: AppBar(
-        title: _isSearching
-            ? TextField(
-          controller: _searchController,
-          decoration: const InputDecoration(
-            hintText: 'Search Contacts...',
-            border: InputBorder.none,
-          ),
-          style: const TextStyle(color: Colors.white, fontSize: 18),
-        )
-            : const Text('Contacts'),
+        title: Row(
+          children: [
+            Icon(
+              Icons.contacts,
+              color: Color(0xFF212A3E),
+              size: 24.0,
+            ),
+            SizedBox(width: 8.0),
+            Text(
+              '연락처',
+              style: TextStyle(
+                fontSize: 24.0,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF212A3E),
+              ),
+            ),
+            SizedBox(width: 16.0),
+            Expanded(
+              child: _isSearching
+                  ? TextField(
+                controller: _searchController,
+                decoration: const InputDecoration(
+                  hintText: 'Search Contacts...',
+                  border: InputBorder.none,
+                ),
+                style: const TextStyle(color: Colors.black, fontSize: 18),
+              )
+                  : Container(),
+            ),
+          ],
+        ),
         actions: _isSearching
             ? [
           IconButton(
@@ -113,7 +134,7 @@ class _Tab1ScreenState extends State<Tab1Screen> {
           padding: const EdgeInsets.all(10.0),
           child: Text(
             '연락처 (${_filteredContacts.length} Found)',
-            style: const TextStyle(fontSize: 12),
+            style: TextStyle(fontSize: 12),
           ),
         ),
         Expanded(
