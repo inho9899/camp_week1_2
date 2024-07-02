@@ -73,34 +73,53 @@ class _Tab1ScreenState extends State<Tab1Screen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey.shade200, // 전체 배경색 설정
-      appBar: AppBar(
-        title: _isSearching
-            ? TextField(
-          controller: _searchController,
-          decoration: const InputDecoration(
-            hintText: 'Search Contacts...',
-            border: InputBorder.none,
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.contacts,
+                  color: Color(0xFF212A3E),
+                  size: 24.0,
+                ),
+                SizedBox(width: 8.0),
+                Expanded(
+                  child: Text(
+                    '연락처',
+                    style: TextStyle(
+                      fontSize: 24.0,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF212A3E),
+                    ),
+                  ),
+                ),
+                if (_isSearching)
+                  Expanded(
+                    child: TextField(
+                      controller: _searchController,
+                      decoration: const InputDecoration(
+                        hintText: 'Search Contacts...',
+                        border: InputBorder.none,
+                      ),
+                      style: const TextStyle(color: Colors.black, fontSize: 18),
+                    ),
+                  ),
+                IconButton(
+                  icon: Icon(_isSearching ? Icons.clear : Icons.search),
+                  onPressed: _isSearching ? _stopSearch : _startSearch,
+                ),
+              ],
+            ),
           ),
-          style: const TextStyle(color: Colors.white, fontSize: 18),
-        )
-            : const Text('Contacts'),
-        actions: _isSearching
-            ? [
-          IconButton(
-            icon: const Icon(Icons.clear),
-            onPressed: _stopSearch,
-          ),
-        ]
-            : [
-          IconButton(
-            icon: const Icon(Icons.search),
-            onPressed: _startSearch,
+          Expanded(
+            child: Container(
+              color: Colors.grey.shade200, // 전체 배경색 설정
+              child: _buildBody(),
+            ),
           ),
         ],
-      ),
-      body: Container(
-        color: Colors.grey.shade200, // 전체 배경색 설정
-        child: _buildBody(),
       ),
     );
   }
