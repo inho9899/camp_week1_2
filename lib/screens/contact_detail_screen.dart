@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:contacts_service/contacts_service.dart';
 import 'dart:math';
+import 'package:url_launcher/url_launcher.dart';
 
 class ContactDetailScreen extends StatelessWidget {
   final Contact contact;
@@ -58,6 +59,22 @@ class ContactDetailScreen extends StatelessWidget {
     return null;
   }
 
+  Future<void> _makePhoneCall(String? phoneNumber) async {
+    final Uri launchUri = Uri(
+      scheme: 'tel',
+      path: phoneNumber,
+    );
+    await launch(launchUri.toString());
+  }
+
+  Future<void> _sendSMS(String? phoneNumber) async {
+    final Uri launchUri = Uri(
+      scheme: 'sms',
+      path: phoneNumber,
+    );
+    await launch(launchUri.toString());
+  }
+
   @override
   Widget build(BuildContext context) {
     final contactMap = _contactToMap(contact);
@@ -68,26 +85,55 @@ class ContactDetailScreen extends StatelessWidget {
       ),
       body: Padding(
         padding: const EdgeInsets.all(0), // 리스트뷰 자체의 패딩 제거
-        child: ListView.separated(
-          padding: EdgeInsets.zero, // 리스트뷰 항목의 좌우 공백 제거
-          itemCount: contactMap.length,
-          itemBuilder: (context, index) {
-            final entry = contactMap.entries.elementAt(index);
-            return Container(
-              padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 16.0), // 항목의 좌우 패딩 설정
+        child: Column(
+          children: [
+            Expanded(
+              child: ListView.separated(
+                padding: EdgeInsets.zero, // 리스트뷰 항목의 좌우 공백 제거
+                itemCount: contactMap.length,
+                itemBuilder: (context, index) {
+                  final entry = contactMap.entries.elementAt(index);
+                  return Container(
+                    padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 16.0), // 항목의 좌우 패딩 설정
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          entry.key,
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        Flexible(
+                          child: Align(
+                            alignment: Alignment.centerRight,
+                            child: Text(entry.value.toString()),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+                separatorBuilder: (context, index) => const Divider(), // 각 항목 사이에 구분선 추가
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(16.0),
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  Text(
-                    entry.key,
-                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ElevatedButton.icon(
+                    onPressed: () => _makePhoneCall(contact.phones?.first.value),
+                    icon: Icon(Icons.call),
+                    label: Text('Call'),
                   ),
-                  Flexible(child: Text(entry.value.toString())),
+                  ElevatedButton.icon(
+                    onPressed: () => _sendSMS(contact.phones?.first.value),
+                    icon: Icon(Icons.message),
+                    label: Text('Message'),
+                  ),
                 ],
               ),
-            );
-          },
-          separatorBuilder: (context, index) => const Divider(), // 각 항목 사이에 구분선 추가
+            ),
+          ],
         ),
       ),
     );
