@@ -18,7 +18,7 @@ class _Tab3ScreenState extends State<Tab3Screen> {
   @override
   void initState() {
     super.initState();
-    _loadDdays();
+    _loadDdays().then((_) => _removePastDdays());
   }
 
   Future<void> _pickDate(BuildContext context) async {
@@ -60,7 +60,7 @@ class _Tab3ScreenState extends State<Tab3Screen> {
                     _scheduleNotification(newDday);
                     _saveDdays();
                     _checkAndShowImmediateNotification(newDday);
-                    _removeExpiredDdays(); // 새로 추가된 부분
+                    _removePastDdays();
                   });
                   Navigator.of(context).pop();
                 },
@@ -92,7 +92,6 @@ class _Tab3ScreenState extends State<Tab3Screen> {
           );
         }).toList();
       });
-      _removeExpiredDdays(); // 화면 초기화 시 만료된 디데이 제거
     }
   }
 
@@ -164,7 +163,7 @@ class _Tab3ScreenState extends State<Tab3Screen> {
     );
     const NotificationDetails platformChannelSpecifics = NotificationDetails(android: androidPlatformChannelSpecifics);
     await flutterLocalNotificationsPlugin.schedule(
-      0,
+      UniqueKey().hashCode, // 고유한 ID를 사용하여 알림을 예약합니다.
       '과제 알리미',
       message,
       scheduledNotificationDateTime,
@@ -194,19 +193,18 @@ class _Tab3ScreenState extends State<Tab3Screen> {
     );
     const NotificationDetails platformChannelSpecifics = NotificationDetails(android: androidPlatformChannelSpecifics);
     await flutterLocalNotificationsPlugin.show(
-      0,
+      UniqueKey().hashCode, // 고유한 ID를 사용하여 알림을 예약합니다.
       '과제 알리미',
       message,
       platformChannelSpecifics,
     );
   }
 
-  void _removeExpiredDdays() {
-    final now = DateTime.now();
+  void _removePastDdays() {
     setState(() {
-      _ddayList.removeWhere((dday) => dday.date.isBefore(DateTime(now.year, now.month, now.day)));
+      _ddayList.removeWhere((dday) => _calculateDaysRemaining(dday.date) < 0);
+      _saveDdays();
     });
-    _saveDdays();
   }
 
   @override
@@ -260,45 +258,43 @@ class _Tab3ScreenState extends State<Tab3Screen> {
             ),
             SizedBox(height: 16.0),
             Expanded(
-              child: Scrollbar(
-                child: ListView.builder(
-                  itemCount: _ddayList.length,
-                  itemBuilder: (context, index) {
-                    Dday dday = _ddayList[index];
-                    return GestureDetector(
-                      onLongPress: () => _deleteDday(index),
-                      child: Container(
-                        margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
-                        padding: const EdgeInsets.all(16.0),
-                        decoration: BoxDecoration(
-                          color: Colors.white, // 흰색 배경
-                          border: Border.all(color: Colors.black, width: 1.0), // 검정색 테두리
-                          borderRadius: BorderRadius.circular(20.0),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                Icon(Icons.calendar_today, color: Colors.black, size: 24.0),
-                                SizedBox(width: 8.0),
-                                Text(
-                                  'D-${_calculateDaysRemaining(dday.date)}: ${_formatDate(dday.date)}',
-                                  style: TextStyle(
-                                    fontSize: 18.0,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            SizedBox(height: 8.0),
-                            Text(dday.description),
-                          ],
-                        ),
+              child: ListView.builder(
+                itemCount: _ddayList.length,
+                itemBuilder: (context, index) {
+                  Dday dday = _ddayList[index];
+                  return GestureDetector(
+                    onLongPress: () => _deleteDday(index),
+                    child: Container(
+                      margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+                      padding: const EdgeInsets.all(16.0),
+                      decoration: BoxDecoration(
+                        color: Colors.white, // 흰색 배경
+                        border: Border.all(color: Colors.black, width: 1.0), // 검정색 테두리
+                        borderRadius: BorderRadius.circular(20.0),
                       ),
-                    );
-                  },
-                ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(Icons.calendar_today, color: Colors.black, size: 24.0),
+                              SizedBox(width: 8.0),
+                              Text(
+                                'D-${_calculateDaysRemaining(dday.date)}: ${_formatDate(dday.date)}',
+                                style: TextStyle(
+                                  fontSize: 18.0,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                          SizedBox(height: 8.0),
+                          Text(dday.description),
+                        ],
+                      ),
+                    ),
+                  );
+                },
               ),
             ),
           ],
