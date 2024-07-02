@@ -145,27 +145,150 @@ class _Tab2ScreenState extends State<Tab2Screen> with AutomaticKeepAliveClientMi
     _saveImages();
   }
 
+  Future<void> _emptyTrash() async {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('휴지통 비우기'),
+          content: const Text('휴지통을 비우시겠습니까? 이 작업은 되돌릴 수 없습니다.'),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text('아니요'),
+            ),
+            TextButton(
+              onPressed: () {
+                setState(() {
+                  for (var image in _trashImages) {
+                    image.file.delete();
+                  }
+                  _trashImages.clear();
+                });
+                _saveImages();
+                Navigator.of(context).pop();
+              },
+              child: const Text('예'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _restoreImage(int index) async {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('이미지 복원'),
+          content: const Text('이 이미지를 복원하시겠습니까?'),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text('아니요'),
+            ),
+            TextButton(
+              onPressed: () {
+                setState(() {
+                  _images.add(_trashImages[index]);
+                  _trashImages.removeAt(index);
+                });
+                _saveImages();
+                Navigator.of(context).pop();
+              },
+              child: const Text('예'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _unfavoriteImage(int index, bool isFavoriteTab) async {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('즐겨찾기 취소'),
+          content: const Text('이 이미지를 즐겨찾기에서 취소하시겠습니까?'),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text('아니요'),
+            ),
+            TextButton(
+              onPressed: () {
+                setState(() {
+                  if (isFavoriteTab) {
+                    int originalIndex = _images.indexOf(_images.where((image) => image.isFavorite).toList()[index]);
+                    _images[originalIndex].isFavorite = false;
+                  } else {
+                    _images[index].isFavorite = false;
+                  }
+                });
+                _saveImages();
+                Navigator.of(context).pop();
+              },
+              child: const Text('예'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     super.build(context);
     return DefaultTabController(
       length: 3,
       child: Scaffold(
-        appBar: AppBar(
-          title: const Text('갤러리'),
-          bottom: const TabBar(
-            tabs: [
-              Tab(text: '전체'),
-              Tab(text: '즐겨찾기'),
-              Tab(text: '휴지통'),
-            ],
-          ),
-        ),
-        body: TabBarView(
+        body: Column(
           children: [
-            _buildGridView(_images),
-            _buildGridView(_images.where((image) => image.isFavorite).toList(), isFavoriteTab: true),
-            _buildTrashView(),
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.photo,
+                    color: Color(0xFF212A3E),
+                    size: 24.0,
+                  ),
+                  SizedBox(width: 8.0),
+                  Text(
+                    '갤러리',
+                    style: TextStyle(
+                      fontSize: 24.0,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF212A3E),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const TabBar(
+              tabs: [
+                Tab(text: '전체'),
+                Tab(text: '즐겨찾기'),
+                Tab(text: '휴지통'),
+              ],
+            ),
+            Expanded(
+              child: TabBarView(
+                children: [
+                  _buildGridView(_images),
+                  _buildGridView(_images.where((image) => image.isFavorite).toList(), isFavoriteTab: true),
+                  _buildTrashView(),
+                ],
+              ),
+            ),
           ],
         ),
         floatingActionButton: _buildFloatingActionButton(),
@@ -187,7 +310,9 @@ class _Tab2ScreenState extends State<Tab2Screen> with AutomaticKeepAliveClientMi
             _showImageViewer(context, images, index);
           },
           onLongPress: () {
-            if (!isFavoriteTab) {
+            if (isFavoriteTab) {
+              _unfavoriteImage(index, true);
+            } else {
               _deleteImage(index);
             }
           },
@@ -263,11 +388,7 @@ class _Tab2ScreenState extends State<Tab2Screen> with AutomaticKeepAliveClientMi
             );
           },
           onTap: () {
-            setState(() {
-              _images.add(_trashImages[index]);
-              _trashImages.removeAt(index);
-            });
-            _saveImages();
+            _restoreImage(index);
           },
           child: Padding(
             padding: const EdgeInsets.all(4.0),
@@ -276,8 +397,6 @@ class _Tab2ScreenState extends State<Tab2Screen> with AutomaticKeepAliveClientMi
               fit: BoxFit.cover,
               width: double.infinity,
               height: double.infinity,
-
-    
             ),
           ),
         );
@@ -296,6 +415,11 @@ class _Tab2ScreenState extends State<Tab2Screen> with AutomaticKeepAliveClientMi
               return FloatingActionButton(
                 onPressed: () => _showPickOptionsDialog(context),
                 child: const Icon(Icons.add),
+              );
+            } else if (tabController.index == 2) {
+              return FloatingActionButton(
+                onPressed: () => _emptyTrash(),
+                child: const Icon(Icons.delete),
               );
             }
             return SizedBox.shrink(); // 다른 탭에서는 빈 공간을 반환
