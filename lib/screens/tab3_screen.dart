@@ -59,7 +59,8 @@ class _Tab3ScreenState extends State<Tab3Screen> {
                     _ddayList.add(newDday);
                     _scheduleNotification(newDday);
                     _saveDdays();
-                    _checkAndShowImmediateNotification(newDday); // 추가된 코드
+                    _checkAndShowImmediateNotification(newDday);
+                    _removeExpiredDdays(); // 새로 추가된 부분
                   });
                   Navigator.of(context).pop();
                 },
@@ -91,6 +92,7 @@ class _Tab3ScreenState extends State<Tab3Screen> {
           );
         }).toList();
       });
+      _removeExpiredDdays(); // 화면 초기화 시 만료된 디데이 제거
     }
   }
 
@@ -197,6 +199,14 @@ class _Tab3ScreenState extends State<Tab3Screen> {
       message,
       platformChannelSpecifics,
     );
+  }
+
+  void _removeExpiredDdays() {
+    final now = DateTime.now();
+    setState(() {
+      _ddayList.removeWhere((dday) => dday.date.isBefore(DateTime(now.year, now.month, now.day)));
+    });
+    _saveDdays();
   }
 
   @override
