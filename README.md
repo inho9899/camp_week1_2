@@ -124,9 +124,9 @@
 
 <table>
   <tr>
-    <td><img src="execute_1.gif" alt="이미지 1" width="300"/></td>
-    <td><img src="execute_2.gif" alt="이미지 2" width="300"/></td>
-    <td><img src="execute_3.gif" alt="이미지 3" width="300"/></td>
+    <td><img src="execute_1.gif" alt="이미지 1" width="250"/></td>
+    <td><img src="execute_2.gif" alt="이미지 2" width="250"/></td>
+    <td><img src="execute_3.gif" alt="이미지 3" width="250"/></td>
   </tr>
 </table>
 
