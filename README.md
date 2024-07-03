@@ -1,4 +1,4 @@
-# [Week 1] Team Project (2024 Summer) : [제목]
+# [Week 1] Team Project (2024 Summer) : [Tab Master]
 
 
 <br>
