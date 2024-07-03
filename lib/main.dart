@@ -110,7 +110,7 @@ class _MyHomePageState extends State<MyHomePage> {
               height: 40, // 이미지 높이 설정
             ),
             const SizedBox(width: 10),
-            const Text('Tab Master'),
+            const Text('Pocket Assistant'),
           ],
         ),
         backgroundColor: Colors.blue, // AppBar 배경색 설정
