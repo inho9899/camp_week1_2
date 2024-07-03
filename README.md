@@ -124,10 +124,14 @@
 
 <table>
   <tr>
-    <td><img src="execute_1.gif" alt="이미지 1" width="240"/></td>
-    <td><img src="execute_2.gif" alt="이미지 2" width="240"/></td>
-    <td><img src="execute_3.gif" alt="이미지 3" width="240"/></td>
+    <td><img src="execute_1.gif" alt="이미지 1" width="300"/></td>
+    <td><img src="execute_2.gif" alt="이미지 2" width="300"/></td>
+    <td><img src="execute_3.gif" alt="이미지 3" width="300"/></td>
   </tr>
 </table>
 
 
+---
+### Release Apk
+
+[Pocket Assitant : Drive를 통해 다운로드](https://drive.google.com/drive/folders/1MzhX94tWfji_ZuEttN-0B0Mqc6cCaw0q)
